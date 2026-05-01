@@ -4,6 +4,8 @@ const TelegramBot = require('node-telegram-bot-api');
 const token  = process.env.BOT_TOKEN;
 const appUrl = process.env.APP_URL;
 
+
+
 if (!token || token.includes('bu_yerga')) {
   console.error('❌  .env faylida BOT_TOKEN yo\'q!');
   process.exit(1);
@@ -13,7 +15,18 @@ if (!appUrl || appUrl.includes('bu_yerga')) {
   process.exit(1);
 }
 
-const bot = new TelegramBot(token, { polling: true });
+const bot = new TelegramBot(token, {
+  polling: {
+    autoStart: true,
+    params: { timeout: 10 }
+  }
+});
+
+// 409 xatosini jim o'tkazish — Railway yangi instancega almashtiradi
+bot.on('polling_error', (err) => {
+  if (err.message && err.message.includes('409')) return;
+  console.error('Polling xato:', err.message);
+});
 
 console.log('🤖  Telegram bot ishga tushdi...');
 
