@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Mafia — Shahar vs Mafia</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;900&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎭</text></svg>">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ══ WELCOME ══════════════════════════════════════════════════════════ -->
+  <section id="s-welcome" class="screen active">
+    <div class="particles" id="particles"></div>
+    <div class="screen-inner">
+      <div class="brand">
+        <div class="brand-icon">🎭</div>
+        <h1 class="brand-title">MAFIA</h1>
+        <p class="brand-sub">Shahar vs Mafia</p>
+      </div>
+      <div class="welcome-quote">"Orangizdagi ba'zilar kechasi uyg'onadigan Mafia a'zolari..."</div>
+      <div class="form-block">
+        <input id="inp-name" class="inp" type="text" placeholder="Ismingizni kiriting..." maxlength="20" autocomplete="off">
+      </div>
+      <div class="btn-stack">
+        <button class="btn btn-primary" id="btn-create">🏠 &nbsp;Xona yaratish</button>
+        <button class="btn btn-ghost"   id="btn-to-join">🔑 &nbsp;Xonaga kirish</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ JOIN ══════════════════════════════════════════════════════════════ -->
+  <section id="s-join" class="screen">
+    <div class="particles"></div>
+    <div class="screen-inner">
+      <button class="btn-back" id="btn-back-join">← Orqaga</button>
+      <h2 class="screen-title">Xonaga kirish</h2>
+      <div class="form-block">
+        <input id="inp-code" class="inp inp-code" type="text" placeholder="XONA KODI" maxlength="8" autocomplete="off">
+      </div>
+      <button class="btn btn-primary" id="btn-join">Kirish</button>
+    </div>
+  </section>
+
+  <!-- ══ LOBBY ══════════════════════════════════════════════════════════════ -->
+  <section id="s-lobby" class="screen">
+    <div class="screen-inner">
+      <div class="lobby-top">
+        <div class="room-code-box">
+          <span class="room-code-label">Xona kodi</span>
+          <div class="room-code-val" id="lbl-code">──────</div>
+          <button class="btn-icon" id="btn-copy" title="Nusxa olish">📋</button>
+        </div>
+      </div>
+      <div class="section-header">
+        O'yinchilar: <span id="lbl-count">0</span> nafar
+      </div>
+      <ul id="lobby-players" class="player-roster"></ul>
+      <div id="host-zone" class="host-zone hidden">
+        <button class="btn btn-success wide" id="btn-start">▶ &nbsp;O'yinni boshlash</button>
+        <p class="hint">Minimum 4, maksimum 12 o'yinchi</p>
+      </div>
+      <div id="guest-zone" class="guest-zone">
+        <div class="pulse-dot"></div>
+        <span>Boshlovchi o'yinni boshlarishini kuting…</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ ROLE REVEAL ════════════════════════════════════════════════════════ -->
+  <section id="s-role" class="screen">
+    <div class="screen-inner centered">
+      <p class="pre-reveal">Sizning rolingiz…</p>
+      <div class="role-card" id="role-card">
+        <div class="role-glow" id="role-glow"></div>
+        <div class="role-emoji" id="role-emoji">🎭</div>
+        <div class="role-name" id="role-name">—</div>
+        <div class="role-desc" id="role-desc"></div>
+        <div class="role-power" id="role-power"></div>
+      </div>
+      <div id="mafia-team-box" class="mafia-team hidden">
+        <p class="team-lbl">🔴 Sizning jamoangiz:</p>
+        <div id="mafia-team-names"></div>
+      </div>
+      <button class="btn btn-primary wide" id="btn-ready">✓ &nbsp;Tayyor!</button>
+    </div>
+  </section>
+
+  <!-- ══ NIGHT ══════════════════════════════════════════════════════════════ -->
+  <section id="s-night" class="screen night-bg">
+    <div class="stars-layer" id="stars"></div>
+    <div class="screen-inner">
+      <div class="phase-badge night-badge">
+        <span class="phase-icon">🌙</span>
+        <span>TUN <span id="night-round-n">1</span></span>
+      </div>
+      <div class="countdown-ring" id="night-timer-ring">
+        <svg viewBox="0 0 80 80"><circle class="ring-bg" cx="40" cy="40" r="34"/><circle class="ring-fg" id="night-ring-fg" cx="40" cy="40" r="34"/></svg>
+        <span id="night-timer-sec">35</span>
+      </div>
+
+      <!-- Mafia -->
+      <div id="na-mafia" class="night-action hidden">
+        <div class="na-title">🔴 Mafia uyg'ondi</div>
+        <p class="na-sub">Kimni yo'q qilamiz?</p>
+        <ul id="mafia-targets" class="target-list"></ul>
+      </div>
+
+      <!-- Doctor -->
+      <div id="na-doctor" class="night-action hidden">
+        <div class="na-title">🔵 Doktor uyg'ondi</div>
+        <p class="na-sub">Kimni davolaymiz?</p>
+        <ul id="doctor-targets" class="target-list"></ul>
+      </div>
+
+      <!-- Sheriff -->
+      <div id="na-sheriff" class="night-action hidden">
+        <div class="na-title">🟡 Sheriff uyg'ondi</div>
+        <p class="na-sub">Kimni tekshiramiz?</p>
+        <ul id="sheriff-targets" class="target-list"></ul>
+      </div>
+
+      <!-- Citizen -->
+      <div id="na-citizen" class="night-action hidden">
+        <div class="na-title">😴 Siz uxlamoqdasiz…</div>
+        <p class="na-sub">Ertalab shahar sizga muhtoj bo'ladi</p>
+        <div class="zzz">z z z</div>
+      </div>
+
+      <!-- Done / waiting -->
+      <div id="na-done" class="night-action hidden">
+        <div class="na-title">✅ Amalga oshirildi</div>
+        <p class="na-sub">Boshqalar natijasini kutmoqda…</p>
+        <div class="waiting-dots"><span></span><span></span><span></span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ DAY ════════════════════════════════════════════════════════════════ -->
+  <section id="s-day" class="screen day-bg">
+    <div class="sun-rays"></div>
+    <div class="screen-inner">
+      <div class="phase-badge day-badge">
+        <span class="phase-icon">☀️</span>
+        <span>KUN <span id="day-round-n">1</span></span>
+      </div>
+
+      <div id="day-news" class="news-card"></div>
+
+      <div class="section-header">Tirik o'yinchilar</div>
+      <ul id="day-players" class="player-roster alive-list"></ul>
+
+      <div class="day-footer">
+        <div class="countdown-bar-wrap">
+          <div class="countdown-bar" id="day-bar"></div>
+        </div>
+        <div id="host-vote-btn" class="hidden">
+          <button class="btn btn-warning wide" id="btn-goto-vote">🗳️ &nbsp;Ovoz berish bosqichi</button>
+        </div>
+        <p class="hint" id="day-hint">Muhokama qiling, shubhalilarni aniqlang</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ VOTING ══════════════════════════════════════════════════════════════ -->
+  <section id="s-vote" class="screen day-bg">
+    <div class="screen-inner">
+      <div class="phase-badge vote-badge">
+        <span class="phase-icon">🗳️</span>
+        <span>OVOZ BERISH</span>
+      </div>
+      <div class="countdown-ring" id="vote-timer-ring">
+        <svg viewBox="0 0 80 80"><circle class="ring-bg" cx="40" cy="40" r="34"/><circle class="ring-fg vote-ring" id="vote-ring-fg" cx="40" cy="40" r="34"/></svg>
+        <span id="vote-timer-sec">35</span>
+      </div>
+      <p class="vote-instr">Shahardan chiqarilishi kerak deb o'ylaydigan o'yinchini tanlang:</p>
+      <ul id="vote-targets" class="target-list vote-targets"></ul>
+      <div class="vote-progress-wrap">
+        <span>Ovoz berildi: <b id="vote-cast">0</b> / <b id="vote-total">0</b></span>
+        <div class="vote-bar-wrap"><div class="vote-bar" id="vote-bar"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ GAME OVER ════════════════════════════════════════════════════════════ -->
+  <section id="s-over" class="screen">
+    <div class="confetti-layer" id="confetti"></div>
+    <div class="screen-inner centered">
+      <div class="over-icon" id="over-icon">🏆</div>
+      <h1 class="over-title" id="over-title">G'alaba!</h1>
+      <p class="over-msg" id="over-msg"></p>
+      <div class="final-roles" id="final-roles"></div>
+      <button class="btn btn-primary wide" id="btn-new-game">🔄 &nbsp;Yangi o'yin</button>
+    </div>
+  </section>
+
+</div><!-- #app -->
+
+<!-- ══ OVERLAYS ════════════════════════════════════════════════════════════ -->
+
+<div id="toast" class="toast" aria-live="polite"></div>
+
+<div id="modal-sheriff" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-icon">🔍</div>
+    <h3 id="modal-sheriff-title">Sheriff tekshiruvi</h3>
+    <p id="modal-sheriff-body"></p>
+    <button class="btn btn-primary" id="btn-close-modal">Yopish</button>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/app.js"></script>
+</body>
+</html>
