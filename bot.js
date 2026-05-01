@@ -4,33 +4,29 @@ const TelegramBot = require('node-telegram-bot-api');
 const token  = process.env.BOT_TOKEN;
 const appUrl = process.env.APP_URL;
 
-
-
 if (!token || token.includes('bu_yerga')) {
-  console.error('❌  .env faylida BOT_TOKEN yo\'q!');
+  console.error('❌  BOT_TOKEN yo\'q!');
   process.exit(1);
 }
 if (!appUrl || appUrl.includes('bu_yerga')) {
-  console.error('❌  .env faylida APP_URL yo\'q!');
+  console.error('❌  APP_URL yo\'q!');
   process.exit(1);
 }
 
-const bot = new TelegramBot(token, {
-  polling: {
-    autoStart: true,
-    params: { timeout: 10 }
-  }
+// Webhook mode — polling yo'q, 409 conflict bo'lmaydi
+const bot = new TelegramBot(token, { polling: false });
+
+// Webhook URL ni ro'yxatdan o'tkazish
+const webhookUrl = `${appUrl}/tg-webhook`;
+bot.setWebHook(webhookUrl).then(() => {
+  console.log(`🔗  Webhook: ${webhookUrl}`);
+}).catch(err => {
+  console.error('Webhook xato:', err.message);
 });
 
-// 409 xatosini jim o'tkazish — Railway yangi instancega almashtiradi
-bot.on('polling_error', (err) => {
-  if (err.message && err.message.includes('409')) return;
-  console.error('Polling xato:', err.message);
-});
+console.log('🤖  Telegram bot (webhook) ishga tushdi...');
 
-console.log('🤖  Telegram bot ishga tushdi...');
-
-// /start — asosiy xabar + o'yin tugmasi
+// /start
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
   const name   = msg.from.first_name || 'O\'yinchi';
@@ -38,7 +34,6 @@ bot.onText(/\/start/, (msg) => {
   bot.sendMessage(chatId,
     `Salom, *${name}*\\! 🎭\n\n` +
     `*Mafia — Shahar vs Mafia* o'yiniga xush kelibsiz\\!\n\n` +
-    `Qoidalar:\n` +
     `🔴 *Mafia* — kechasi fuqarolarni yo'q qiladi\n` +
     `🔵 *Doktor* — har kecha kimnidir himoya qiladi\n` +
     `🟡 *Sheriff* — har kecha kimnidir tekshiradi\n` +
@@ -48,10 +43,7 @@ bot.onText(/\/start/, (msg) => {
       parse_mode: 'MarkdownV2',
       reply_markup: {
         inline_keyboard: [[
-          {
-            text: '🎮  O\'yinni boshlash',
-            web_app: { url: appUrl }
-          }
+          { text: '🎮  O\'yinni boshlash', web_app: { url: appUrl } }
         ]]
       }
     }
@@ -62,17 +54,9 @@ bot.onText(/\/start/, (msg) => {
 bot.onText(/\/help/, (msg) => {
   bot.sendMessage(msg.chat.id,
     `🎭 *Mafia o'yini qoidalari*\n\n` +
-    `*KUN bosqichi:*\n` +
-    `• Barcha o'yinchilar muhokama qiladi\n` +
-    `• Ovoz berish orqali bir kishini chiqaradi\n` +
-    `• Chiqarilgan kishining roli oshkor bo'ladi\n\n` +
-    `*TUN bosqichi:*\n` +
-    `• 🔴 Mafia — qurbon tanlaydi\n` +
-    `• 🔵 Doktor — birini davolaydi\n` +
-    `• 🟡 Sheriff — birini tekshiradi\n\n` +
-    `*G'alaba sharti:*\n` +
-    `• Shahar: barcha Mafiyani yo'q qilsa\n` +
-    `• Mafia: fuqarolar soni tenglaşса`,
+    `*KUN bosqichi:*\n• Muhokama → Ovoz berish → Chiqarish\n\n` +
+    `*TUN bosqichi:*\n• 🔴 Mafia qurbon tanlaydi\n• 🔵 Doktor himoya qiladi\n• 🟡 Sheriff tekshiradi\n\n` +
+    `*G'alaba:*\n• Shahar: barcha Mafiyani topsa\n• Mafia: soni tenglashsa`,
     {
       parse_mode: 'Markdown',
       reply_markup: {
@@ -84,7 +68,7 @@ bot.onText(/\/help/, (msg) => {
   );
 });
 
-// /play — to'g'ridan-to'g'ri o'yin
+// /play
 bot.onText(/\/play/, (msg) => {
   bot.sendMessage(msg.chat.id, '🎲 O\'yin ekrani ochilmoqda\\.\\.\\.', {
     parse_mode: 'MarkdownV2',
@@ -96,11 +80,12 @@ bot.onText(/\/play/, (msg) => {
   });
 });
 
-// Noma'lum xabar
+// Boshqa xabarlar
 bot.on('message', (msg) => {
   if (msg.text?.startsWith('/')) return;
+  if (msg.web_app_data) return;
   bot.sendMessage(msg.chat.id,
-    'O\'yin boshlash uchun /start yozing yoki quyidagi tugmani bosing 👇',
+    'O\'yin boshlash uchun /start yozing 👇',
     {
       reply_markup: {
         inline_keyboard: [[
@@ -109,14 +94,6 @@ bot.on('message', (msg) => {
       }
     }
   );
-});
-
-// Web App ma'lumot qabul qilish (ixtiyoriy — kelajak uchun)
-bot.on('web_app_data', (msg) => {
-  try {
-    const data = JSON.parse(msg.web_app_data.data);
-    console.log('Web App data:', data);
-  } catch (_) {}
 });
 
 module.exports = bot;
