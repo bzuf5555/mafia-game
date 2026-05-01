@@ -348,15 +348,20 @@ function endGame(code, win) {
 
 // ─── Start ─────────────────────────────────────────────────────────────────
 
+// Railway avtomatik domenni aniqlash
+if (!process.env.APP_URL && process.env.RAILWAY_PUBLIC_DOMAIN) {
+  process.env.APP_URL = `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`;
+}
+
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`🎭  Mafia server  →  http://localhost:${PORT}`);
+  if (process.env.APP_URL) console.log(`🌐  Public URL  →  ${process.env.APP_URL}`);
 
-  // Telegram bot ni alohida ishga tushirish
   if (process.env.BOT_TOKEN && !process.env.BOT_TOKEN.includes('bu_yerga')) {
     require('./bot');
     console.log('🤖  Telegram bot ulandi');
   } else {
-    console.log('ℹ️   Bot ishga tushmadi — .env da BOT_TOKEN kiriting');
+    console.log('ℹ️   Bot ishga tushmadi — BOT_TOKEN yo\'q');
   }
 });
