@@ -3,28 +3,34 @@ const TelegramBot = require('node-telegram-bot-api');
 
 const token  = process.env.BOT_TOKEN;
 const appUrl = process.env.APP_URL;
+const isProd = process.env.NODE_ENV === 'production';
 
 if (!token || token.includes('bu_yerga')) {
   console.error('❌  BOT_TOKEN yo\'q!');
   process.exit(1);
 }
-if (!appUrl || appUrl.includes('bu_yerga')) {
-  console.error('❌  APP_URL yo\'q!');
-  process.exit(1);
+
+let bot;
+
+if (isProd) {
+  // Production: webhook mode (Railway)
+  if (!appUrl || appUrl.includes('bu_yerga')) {
+    console.error('❌  APP_URL yo\'q!');
+    process.exit(1);
+  }
+  bot = new TelegramBot(token, { polling: false });
+  const webhookUrl = `${appUrl}/tg-webhook`;
+  bot.setWebHook(webhookUrl).then(() => {
+    console.log(`🔗  Webhook: ${webhookUrl}`);
+  }).catch(err => {
+    console.error('Webhook xato:', err.message);
+  });
+  console.log('🤖  Telegram bot (webhook) ishga tushdi...');
+} else {
+  // Local: polling mode — tunnel kerak emas
+  bot = new TelegramBot(token, { polling: true });
+  console.log('🤖  Telegram bot (polling) ishga tushdi...');
 }
-
-// Webhook mode — polling yo'q, 409 conflict bo'lmaydi
-const bot = new TelegramBot(token, { polling: false });
-
-// Webhook URL ni ro'yxatdan o'tkazish
-const webhookUrl = `${appUrl}/tg-webhook`;
-bot.setWebHook(webhookUrl).then(() => {
-  console.log(`🔗  Webhook: ${webhookUrl}`);
-}).catch(err => {
-  console.error('Webhook xato:', err.message);
-});
-
-console.log('🤖  Telegram bot (webhook) ishga tushdi...');
 
 // /start
 bot.onText(/\/start/, (msg) => {

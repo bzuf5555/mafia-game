@@ -12,12 +12,14 @@ const io = new Server(server, { cors: { origin: '*' } });
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Telegram webhook endpoint
-app.post('/tg-webhook', (req, res) => {
-  const bot = require('./bot');
-  bot.processUpdate(req.body);
-  res.sendStatus(200);
-});
+// Telegram webhook endpoint (faqat production da kerak)
+if (process.env.NODE_ENV === 'production') {
+  app.post('/tg-webhook', (req, res) => {
+    const bot = require('./bot');
+    bot.processUpdate(req.body);
+    res.sendStatus(200);
+  });
+}
 
 const rooms = new Map();
 
